@@ -7,15 +7,15 @@ import time
 driver = webdriver.Firefox()
 action = ActionChains(driver)
 
-week = driver.find_elements(By.XPATH, f"//*[contains(text(),'HAFTA MODÜLÜ')]")
+week = []
 lectures = []
 
 
 def scroll_to(element):
     driver.execute_script("arguments[0].scrollIntoView(true);", element)
-    time.sleep(1.5)
+    time.sleep(1)
     driver.execute_script("window.scrollBy(0, -200);")
-    time.sleep(1.5)
+    time.sleep(1)
 
 def relocate_elements(i):
     global week,lectures
@@ -47,7 +47,9 @@ print("Hata giriş yapılamıyor.")
 
 print("Devam etmeden önce ders izleme ekranına geldiğinizden emin olun.")
 
-watch_list=input("\n- Virgül kullanarak birden fazla hafta girilebilir.\n- Boş bırakılırsa tüm haftaları listeye ekler.\nHAFTA GİRİNİZ): ")
+week = driver.find_elements(By.XPATH, f"//*[contains(text(),'HAFTA MODÜLÜ')]")
+
+watch_list=input("\n- Virgül kullanarak birden fazla hafta girilebilirsiniz.\n- Boş bırakılırsa tüm haftaları listeye ekler.\nHAFTA GİRİNİZ): ")
 if(watch_list==""):
     watch_list=[i for i in range(1,len(week)+1)]
 elif(',' in watch_list):
@@ -58,9 +60,11 @@ else:
 
 for i in watch_list:
     relocate_elements(i)
+    print(week.text)
     scroll_to(week)
     week.click()
     for j in range(len(lectures)+1):
+        print(lectures[j].text)
         relocate_elements(i)
         scroll_to(lectures[j])
         lectures[j].click()
@@ -70,16 +74,16 @@ for i in watch_list:
             scroll_to(play_button)
             play_button.click()
         except:
-            replay_button = driver.find_element(By.XPATH, "//button[@onclick='TekrarIzle();']")
-            scroll_to(replay_button)
-            replay_button.click()
-            print("- Video tekrar izleniyor.")
-            time.sleep(4)
-            play_button = driver.find_element(By.XPATH, "//button[@title='Play Video']/..")
-            scroll_to(play_button)
-            play_button.click()
-            #print("- İzlenilen video atlandı.")
-            #continue
+            # replay_button = driver.find_element(By.XPATH, "//button[@onclick='TekrarIzle();']")
+            # scroll_to(replay_button)
+            # replay_button.click()
+            # print("- Video tekrar izleniyor.")
+            # time.sleep(4)
+            # play_button = driver.find_element(By.XPATH, "//button[@title='Play Video']/..")
+            # scroll_to(play_button)
+            # play_button.click()
+            print("- İzlenilen video atlandı.")
+            continue
         found_element = False
         while(not found_element):
             try:
@@ -87,4 +91,5 @@ for i in watch_list:
                 found_element = True
             except:
                 time.sleep(3)
+        time.sleep(0.5)
         driver.find_element(By.XPATH,"//button[text()='Ok']").click()
