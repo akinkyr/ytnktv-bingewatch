@@ -121,13 +121,12 @@ for i in watch_list:
         scroll_to(lectures[j])
         lectures[j].click()
         try:
-            wait_play = WebDriverWait(driver,timeout=10,poll_frequency=1)
+            wait_play = WebDriverWait(driver,timeout=5,poll_frequency=1)
             play_button = wait_play.until(EC.presence_of_element_located((By.XPATH, "//button[@title='Play Video']/..")))
             scroll_to(play_button)
             play_button.click()
         except:
             try:
-                time.sleep(0.25)
                 replay_button = wait_play.until(EC.element_to_be_clickable((By.XPATH,"//button[@onclick='TekrarIzle();']")))
                 log(0,"İzlenilen video atlanıyor.")
                 continue
