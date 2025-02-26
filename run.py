@@ -4,6 +4,7 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import time
+import datetime
 
 ### GLOBAL VARIABLES
 
@@ -15,25 +16,37 @@ lectures = []
 driver = webdriver.Firefox()
 driver.get("https://ytnk.tv")
 
-watch_list=input("\n- Virgül kullanarak birden fazla hafta girilebilirsiniz.\n- Boş bırakılırsa tüm haftaları listeye ekler.\n-> HAFTA GİRİNİZ: ")
-if(',' in watch_list):
-    watch_list=watch_list.split(sep=',')
-    watch_list = [int(i) for i in watch_list]
-elif(watch_list!=""):
-    int(watch_list)
+### UTILITY FUNCTIONS AND CLASSES
 
-### UTILITY FUNCTION
+def log(type=0,msg="Message"):
+
+    if(type==0):
+        type="BİLGİ"
+    elif(type==1):
+        type="HATA"
+    else:
+        type='?'
+
+    if(len(msg)>60):
+        msg=msg[:47]+"..."
+    print(f"[{datetime.datetime.now().strftime("%X")}] [{type}] : {msg}")
+
+
+def scroll_to(element):
+    driver.execute_script("arguments[0].scrollIntoView(true);", element)
+    time.sleep(1)
+    driver.execute_script("window.scrollBy(0, -150);")
+    time.sleep(1)
 
 def relocate_elements(i):
     global week,lectures
     week = driver.find_elements(By.XPATH, f"//*[contains(text(),'{i}. HAFTA MODÜLÜ')]")
 
-    if(len(week)>1):
+    if(len(week)>1 and i<10):
         for j in week:
-            if(i<10 and f"1{i}" in j.text):
+            if(f"1{i}" in j.text):
                 week.remove(j)
-                week=week[0]
-                break
+        week=week[0]
     
     lectures = week.find_elements(By.XPATH,"../..//li")
 
@@ -46,7 +59,7 @@ try:
         password=f.readline()
     missing_credentials = False
 except:
-    print("'credentials.txt' dosyası bulunamadı el ile giriş yapınız.")
+    log(0,"'credentials.txt' dosyası bulunamadı el ile giriş yapınız.")
 
 ### LOGIN HANDLER
 
@@ -85,43 +98,49 @@ target_lecture_link1[1].click()
 
 ### WATCH VIDEOS
 
-if(watch_list==""):
+watch_list=input("\n- Virgül kullanarak birden fazla hafta girilebilirsiniz.\n- Boş bırakılırsa tüm haftaları listeye ekler.\n-> HAFTA GİRİNİZ: ")
+watch_list.strip()
+if(',' in watch_list):
+    watch_list=watch_list.split(sep=',')
+    watch_list = [int(i) for i in watch_list]
+elif(watch_list!=""):
+    watch_list = [int(watch_list)]
+else:
     weeks = driver.find_elements(By.XPATH, f"//*[contains(text(),'HAFTA MODÜLÜ')]")
     watch_list=[i for i in range(1,len(weeks)+1)]
 
 for i in watch_list:
     relocate_elements(i)
-    print("- " + week.text)
-    action_week = ActionChains(driver)\
-        .move_to_element(week)\
-        .click(week)\
-        .perform()
-    for j in range(len(lectures)+1):
+    log(0,week.text)
+    scroll_to(week)
+    if(not lectures[0].is_displayed()):
+        week.click()
+    for j in range(len(lectures)):
         relocate_elements(i)
-        print("- " + lectures[j].text)
-        action_lecture = ActionChains(driver)\
-            .move_to_element_with_offset(lectures[j],0,100)\
-            .click(lectures[j])\
-            .perform()
+        log(0,f"[{j+1}/{len(lectures)}] " + lectures[j].text)
+        scroll_to(lectures[j])
+        lectures[j].click()
         try:
             wait_play = WebDriverWait(driver,timeout=10,poll_frequency=1)
             play_button = wait_play.until(EC.presence_of_element_located((By.XPATH, "//button[@title='Play Video']/..")))
-            play_action = ActionChains(driver)\
-                .move_to_element_with_offset(play_button,0,100)\
-                .click(play_button)\
-                .perform()
+            scroll_to(play_button)
+            play_button.click()
         except:
-            # replay_button = driver.find_element(By.XPATH, "//button[@onclick='TekrarIzle();']")
-            # scroll_to(replay_button)
-            # replay_button.click()
-            # print("- Video tekrar izleniyor.")
-            # time.sleep(4)
-            # play_button = driver.find_element(By.XPATH, "//button[@title='Play Video']/..")
-            # scroll_to(play_button)
-            # play_button.click()
-            print("- Önceden izlenilen video atlandı.")
-            continue
+            try:
+                time.sleep(0.25)
+                replay_button = wait_play.until(EC.element_to_be_clickable((By.XPATH,"//button[@onclick='TekrarIzle();']")))
+                log(0,"İzlenilen video atlanıyor.")
+                continue
+            except Exception as exc:
+                log(1,"Video oynatılamadı. (Atlandı)")
+                print(f"{exc}")
+                continue
+
         wait_end = WebDriverWait(driver,timeout=60*60,poll_frequency=3)
         msg_element = wait_end.until(EC.presence_of_element_located((By.XPATH,"//*[text()='Konuyu Başarı İle Tamamladınız!']")))
         time.sleep(0.25)
         driver.find_element(By.XPATH,"//button[text()='Ok']").click()
+
+log(0,"İzleme listesi bitti, program sonlandırılıyor.")
+driver.quit()
+exit(0)
