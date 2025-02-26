@@ -12,6 +12,10 @@ Enter'a basmak tüm haftaları dahil eder.
 Cihazınızda python'un kurulu olması gerektir.
 ### Selenium
 Aşağıdaki komutu kullanarak Selenium'u indirin. Eğer indirmediyseniz Python'u indirip kurduktan sonra bu adımı takip edin.
-´´´pip install selenium´´´
+´´´
+pip install selenium
+´´´
 ## Çalıştırma
-´´´python run.py´´´
+´´´
+python run.py
+´´´
